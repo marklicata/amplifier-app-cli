@@ -6,9 +6,9 @@
 
 | Phase | Status | Lines of Code | Test Coverage | Documentation |
 |-------|--------|---------------|---------------|---------------|
-| **Phase 1: Foundation** | ✅ Complete | 195 | test_tui.py | Inline |
-| **Phase 2.5: Review Screen** | ✅ Complete | 460 | test_review_screen.py (3 scenarios) | 13KB |
-| **Phase 2: Chat Interface** | ✅ Complete | 733 | test_chat_screen.py | 16KB |
+| **Phase 1: Foundation** | ✅ Complete | 195 | test/TUI/test_tui.py | Inline |
+| **Phase 2.5: Review Screen** | ✅ Complete | 460 | test/TUI/test_review_screen.py (3 scenarios) | 13KB |
+| **Phase 2: Chat Interface** | ✅ Complete | 733 | test/TUI/test_chat_screen.py | 16KB |
 | **Total** | **3 Phases** | **1,388** | **3 test files** | **29KB** |
 
 ### ⏳ Remaining Phases
@@ -164,9 +164,11 @@ amplifier-app-cli/
 │   ├── TUI_USER_NEEDS_ANALYSIS.md (33KB) ✅
 │   ├── PHASE_2.5_REVIEW_SCREEN.md (13KB) ✅
 │   └── PHASE_2_CHAT_INTERFACE.md (16KB) ✅
-├── test_tui.py ✅
-├── test_chat_screen.py ✅
-└── test_review_screen.py ✅
+└── test/
+    └── TUI/
+        ├── test_tui.py ✅
+        ├── test_chat_screen.py ✅
+        └── test_review_screen.py ✅
 ```
 
 **Total Files**: 11 Python files + 4 documentation files + 3 test files = 18 files

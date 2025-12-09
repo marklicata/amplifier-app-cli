@@ -185,7 +185,7 @@ app.run()
 ### Standalone Test App
 
 ```bash
-python test_chat_screen.py
+python test/TUI/test_chat_screen.py
 ```
 
 **What you'll see**:
@@ -300,7 +300,7 @@ amplifier_app_cli/tui/
 ```
 
 ### Testing
-- **Test file**: `test_chat_screen.py` (76 lines)
+- **Test file**: `test/TUI/test_chat_screen.py` (76 lines)
 - **Scenarios**: Interactive testing with simulated responses
 - **Coverage**: All UI paths, keyboard shortcuts, streaming
 

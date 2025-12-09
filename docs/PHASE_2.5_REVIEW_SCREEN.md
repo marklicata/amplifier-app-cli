@@ -130,11 +130,11 @@ decision = result.get("decision")
 
 ## Test Scenarios
 
-A comprehensive test app is provided: `test_review_screen.py`
+A comprehensive test app is provided: `test/TUI/test_review_screen.py`
 
 **Run it:**
 ```bash
-python test_review_screen.py
+python test/TUI/test_review_screen.py
 ```
 
 **Three scenarios demonstrated:**
@@ -298,7 +298,7 @@ amplifier_app_cli/tui/
 ```
 
 ### Testing
-- **Test file**: `test_review_screen.py` (198 lines)
+- **Test file**: `test/TUI/test_review_screen.py` (198 lines)
 - **Scenarios**: 3 (high confidence, low confidence, breaking changes)
 - **Coverage**: All major UI paths tested
 
