@@ -184,6 +184,7 @@ class ProviderManager:
                 if info and "display_name" in info:
                     display_name = info["display_name"]
                 else:
+                    print(f"[DEBUG] Fallback to module name for display_name: {module.name}")
                     # Fallback to module's name from entry point
                     display_name = module.name
                 providers[module.id] = (module.id, display_name, module.description)
@@ -222,10 +223,12 @@ class ProviderManager:
         effective_sources = get_effective_provider_sources(self.config)
         for module_id, source_uri in effective_sources.items():
             try:
+                print(f"[DEBUG] Resolving provider {module_id} from source: {source_uri}")
                 # Resolve source to path (handles both git URLs and local paths)
                 source = source_from_uri(source_uri)
                 module_path = source.resolve()
 
+                print(f"[DEBUG] Resolved module path: {module_path}")
                 # Add to sys.path if not already there
                 path_str = str(module_path)
                 if path_str not in sys.path:
@@ -235,8 +238,10 @@ class ProviderManager:
                 # Invalidate import caches
                 importlib.invalidate_caches()
 
+                print(f"[DEBUG] Attempting to get provider info for {module_id}")
                 # Try to get provider info via direct import
                 info = get_provider_info(module_id)
+                print(f"[DEBUG] Provider info for {module_id}: {info}")
                 if info:
                     display_name = info.get("display_name", module_id.replace("-", " ").title())
                     description = info.get("description", f"Provider: {module_id}")

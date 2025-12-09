@@ -55,6 +55,7 @@ def register_run_command(
         default="text",
         help="Output format: text (markdown), json (response only), json-trace (full execution detail)",
     )
+    @click.option("--tui", is_flag=True, help="Launch TUI mode (beta)")
     def run(
         prompt: str | None,
         profile: str | None,
@@ -65,6 +66,7 @@ def register_run_command(
         resume: str | None,
         verbose: bool,
         output_format: str,
+        tui: bool,
     ):
         """Execute a prompt or start an interactive session."""
         from ..session_store import SessionStore
@@ -204,6 +206,23 @@ def register_run_command(
         from ..utils.startup_checker import check_and_notify
 
         asyncio.run(check_and_notify())
+
+        # Handle TUI mode (Phase 1: proof of concept)
+        if tui:
+            from ..tui.app import run_tui
+
+            # TUI mode currently only supports chat/interactive
+            if mode == "single" and prompt:
+                console.print("[yellow]Note:[/yellow] TUI mode doesn't support single-shot yet. Switching to chat mode.")
+                mode = "chat"
+
+            # Launch TUI with config
+            run_tui(
+                config=config_data,
+                session_id=resume if resume else None,
+                profile=active_profile_name,
+            )
+            return run
 
         if mode == "chat":
             # Interactive mode
