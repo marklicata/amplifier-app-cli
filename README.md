@@ -2,7 +2,7 @@
 
 Command-line interface for the Amplifier AI-powered modular development platform.
 
-> **Note**: This is a **reference implementation** of an Amplifier CLI. It works with [amplifier-core](https://github.com/microsoft/amplifier-core) and demonstrates how to build a CLI around the kernel. You can use this as-is, fork it, or build your own CLI using the core.
+> **Note**: This is a **reference implementation** of an Amplifier CLI. It works with [amplifier-core](https://github.com/microsoft/amplifier-core) and demonstrates how to build a CLI around the kernel. You can use this as-is, fork it, or build your own CLI using [amplifier-foundation](https://github.com/microsoft/amplifier-foundation).
 
 ## Installation
 
@@ -254,16 +254,22 @@ amplifier run --<TAB>      # Shows all options
 
 ## Architecture
 
-This CLI is built on top of amplifier-core and provides:
+This CLI is built using **[amplifier-foundation](https://github.com/microsoft/amplifier-foundation)**, a common library that abstracts the complexity of working with amplifier-core and its dependencies. The foundation provides:
 
-- **Profile system** - Reusable, composable configuration bundles (via amplifier-profiles)
-- **Settings management** - Three-scope configuration (local/project/global via amplifier-config)
-- **Module resolution** - Five-layer module source resolution (via amplifier-module-resolution)
-- **Collection system** - Shareable expertise bundles (via amplifier-collections)
-- **Session storage** - Project-scoped session persistence with multi-turn sub-session resumption
-- **Agent delegation** - Spawn and resume sub-sessions for iterative collaboration with specialized agents
-- **Interactive mode** - REPL with slash commands
-- **Key management** - Secure API key storage
+- **Path Management** - Unified access to configuration, collections, and profiles
+- **Provider Management** - Provider lifecycle, configuration, and discovery
+- **Session Management** - Session persistence, spawning, and resumption
+- **Module Management** - Module installation and configuration
+- **Key Management** - Secure API key storage
+- **Mention Loading** - @mention expansion system
+
+The CLI layer adds:
+
+- **Command Interface** - Rich command-line commands with Typer
+- **Interactive REPL** - Multi-line chat interface with prompt_toolkit
+- **TUI** - Optional text-based UI with Textual
+- **Rich Output** - Beautiful console output with Rich
+- **Bundled Collections** - Pre-installed expertise bundles
 
 ## Supported Providers
 
@@ -300,36 +306,43 @@ uv run pytest
 
 ```
 amplifier_app_cli/
-├── commands/          # CLI command implementations (provider, collection, init, logs, setup)
+├── commands/          # CLI command implementations
+│   ├── provider.py    # Provider management commands
+│   ├── collection.py  # Collection management commands
+│   ├── init.py        # Setup wizard
+│   ├── logs.py        # Log viewing
+│   └── setup.py       # Additional setup commands
 ├── data/
 │   ├── collections/   # Bundled collections (foundation, developer-expertise)
 │   │   └── developer-expertise/agents/  # Default agents
 │   ├── profiles/      # Profile defaults and metadata
 │   └── context/       # Bundled context files
-├── lib/               # Shared libraries
-│   └── mention_loading/ # @mention expansion system
-├── utils/             # Utility functions
+├── ui/                # Rich console components
+├── tui/               # Textual UI components
 ├── banners/           # Banner art
-├── paths.py           # Path configuration and factory functions
-├── key_manager.py     # API key management
-├── provider_manager.py # Provider configuration
-├── module_manager.py  # Module management
-├── session_store.py   # Session persistence (transcript, metadata, state)
-├── session_spawner.py # Agent delegation (spawn and resume sub-sessions)
-├── agent_config.py    # Agent configuration utilities
-└── main.py            # CLI entry point
+├── lib/               # Wrapper modules (re-export foundation)
+│   └── mention_loading/ # @mention wrappers
+├── utils/             # CLI-specific utilities
+│   └── mentions.py    # Mention utility wrappers
+├── paths.py           # Path configuration wrapper
+├── approval_provider.py # CLI-specific approval UX
+└── main.py            # CLI entry point and REPL
 
-toolkit/               # Standalone scenario tool utilities (at repo root)
-├── utilities/         # Structural utilities (file ops, progress, validation)
-├── examples/          # Example tools (tutorial_analyzer)
-└── templates/         # Tool templates
+tests/
+├── TUI/               # TUI component tests
+├── test_mentions.py   # Mention system tests
+├── test_mention_resolver_collections.py # Collection resolution tests
+├── test_repl_prompt.py # REPL tests
+└── test_save_command_sanitization.py # Command tests
 ```
 
-**Note**: Core functionality provided by libraries:
-- `amplifier-profiles` - Profile loading and compilation
-- `amplifier-config` - Settings management
-- `amplifier-module-resolution` - Module source resolution
-- `amplifier-collections` - Collection installation and discovery
+**Dependencies**:
+- `amplifier-foundation` - Core functionality and abstraction layer
+- `amplifier-core` - Amplifier kernel
+- `typer` - CLI framework
+- `rich` - Beautiful console output
+- `prompt_toolkit` - REPL interface
+- `textual` - TUI framework
 
 ## Documentation
 
@@ -338,6 +351,9 @@ toolkit/               # Standalone scenario tool utilities (at repo root)
 - [Context Loading](docs/CONTEXT_LOADING.md) - @mention system implementation
 - [Interactive Mode](docs/INTERACTIVE_MODE.md) - REPL and slash commands
 - [Architectural Decisions](docs/decisions/) - ADRs for major design choices
+
+**Foundation Library** (external):
+- **→ [Amplifier Foundation](https://github.com/microsoft/amplifier-foundation)** - Core library documentation
 
 **Authoritative Guides** (external, maintained in library repos):
 - **→ [Profile Authoring](https://github.com/microsoft/amplifier-profiles/blob/main/docs/PROFILE_AUTHORING.md)** - Creating and managing profiles

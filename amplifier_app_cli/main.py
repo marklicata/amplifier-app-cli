@@ -15,7 +15,7 @@ from typing import Any
 
 import click
 from amplifier_core import AmplifierSession
-from amplifier_core import ModuleValidationError
+# from amplifier_core import Exception # Not exported
 from amplifier_profiles.utils import parse_markdown_body
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import HTML
@@ -856,7 +856,7 @@ async def interactive_chat(
     try:
         with console.status("[dim]Loading...[/dim]", spinner="dots"):
             await session.initialize()
-    except (ModuleValidationError, RuntimeError) as e:
+    except (Exception, RuntimeError) as e:
         # Restore log level before showing error
         core_logger.setLevel(original_level)
         # Try clean error display for module validation errors
@@ -1016,7 +1016,7 @@ async def interactive_chat(
                 console.print("\n[dim]Exiting...[/dim]")
                 break
 
-            except ModuleValidationError as e:
+            except Exception as e:
                 # Clean display for module validation errors
                 display_validation_error(console, e, verbose=verbose)
 
@@ -1160,7 +1160,7 @@ async def execute_single(
             if verbose and output_format == "text":
                 console.print(f"[dim]Session {actual_session_id[:8]}... saved[/dim]")
 
-    except ModuleValidationError as e:
+    except Exception as e:
         if output_format in ["json", "json-trace"]:
             # Restore stdout before writing error JSON
             if original_stdout is not None:
@@ -1168,7 +1168,7 @@ async def execute_single(
             error_output = {
                 "status": "error",
                 "error": str(e),
-                "error_type": "ModuleValidationError",
+                "error_type": "Exception",
                 "session_id": getattr(session, "session_id", None) if "session" in locals() else None,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
@@ -1354,7 +1354,7 @@ async def execute_single_with_session(
             if verbose and output_format == "text":
                 console.print(f"[dim]Session {session_id[:8]}... saved[/dim]")
 
-    except ModuleValidationError as e:
+    except Exception as e:
         if output_format in ["json", "json-trace"]:
             # Restore stdout before writing error JSON
             if original_stdout is not None:
@@ -1362,7 +1362,7 @@ async def execute_single_with_session(
             error_output = {
                 "status": "error",
                 "error": str(e),
-                "error_type": "ModuleValidationError",
+                "error_type": "Exception",
                 "session_id": session_id if "session_id" in locals() else None,
                 "timestamp": datetime.now(UTC).isoformat(),
             }
