@@ -83,7 +83,10 @@ class ReviewTestApp(App):
         )
         
         result = await self.push_screen(screen)
-        self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        if result:
+            self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        else:
+            self.notify("Review cancelled", title="Review Result")
     
     async def show_low_confidence_review(self) -> None:
         """Show review with low confidence."""
@@ -111,7 +114,10 @@ class ReviewTestApp(App):
         )
         
         result = await self.push_screen(screen)
-        self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        if result:
+            self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        else:
+            self.notify("Review cancelled", title="Review Result")
     
     async def show_breaking_changes_review(self) -> None:
         """Show review with breaking changes."""
@@ -139,7 +145,10 @@ class ReviewTestApp(App):
         )
         
         result = await self.push_screen(screen)
-        self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        if result:
+            self.notify(f"User decision: {result.get('decision')}", title="Review Result")
+        else:
+            self.notify("Review cancelled", title="Review Result")
 
 
 def main():

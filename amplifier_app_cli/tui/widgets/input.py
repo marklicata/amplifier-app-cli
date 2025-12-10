@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from textual import on
 from textual.containers import Container
 from textual.message import Message
 from textual.widgets import TextArea
@@ -31,6 +32,37 @@ class InputSubmitted(Message):
         """
         super().__init__()
         self.value = value
+
+
+class ChatTextArea(TextArea):
+    """Custom TextArea configured for chat-style input.
+    
+    Overrides key handling to make:
+    - Enter submit (emit InputSubmitted)
+    - Shift+Enter insert a newline
+    """
+    
+    class Submitted(Message):
+        """Message emitted when Enter is pressed."""
+        
+        def __init__(self, text_area: "ChatTextArea", text: str) -> None:
+            super().__init__()
+            self.text_area = text_area
+            self.text = text
+    
+    def _on_key(self, event) -> None:
+        """Handle key presses to customize Enter behavior."""
+        # Check if this is Enter without shift
+        if event.key == "enter":
+            # Submit the text
+            self.post_message(self.Submitted(self, self.text))
+            event.prevent_default()
+            event.stop()
+            return
+        
+        # For all other keys (including shift+enter which comes as a different key),
+        # use default TextArea behavior
+        super()._on_key(event)
 
 
 class InputArea(Container):
@@ -87,7 +119,7 @@ class InputArea(Container):
     
     def compose(self):
         """Create child widgets."""
-        textarea = TextArea(
+        textarea = ChatTextArea(
             id="chat-input",
             language="markdown",
         )
@@ -104,18 +136,19 @@ class InputArea(Container):
     
     def on_mount(self) -> None:
         """Set up input area after mounting."""
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         
         # Focus the input
         textarea.focus()
     
-    async def on_text_area_submitted(self, event: TextArea.Submitted) -> None:
+    @on(ChatTextArea.Submitted)
+    async def on_chat_text_area_submitted(self, event: ChatTextArea.Submitted) -> None:
         """Handle Enter key press (submit).
         
         Args:
-            event: The submitted event from TextArea
+            event: The submitted event from ChatTextArea
         """
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         
         # Get the text
         text = textarea.text.strip()
@@ -133,7 +166,7 @@ class InputArea(Container):
     
     def clear(self) -> None:
         """Clear the input area."""
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         textarea.clear()
     
     def get_text(self) -> str:
@@ -142,7 +175,7 @@ class InputArea(Container):
         Returns:
             Current text in input area
         """
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         return textarea.text
     
     def set_text(self, text: str) -> None:
@@ -151,12 +184,12 @@ class InputArea(Container):
         Args:
             text: Text to set
         """
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         textarea.text = text
     
     def focus_input(self) -> None:
         """Focus the input area."""
-        textarea = self.query_one("#chat-input", TextArea)
+        textarea = self.query_one("#chat-input", ChatTextArea)
         textarea.focus()
 
 
