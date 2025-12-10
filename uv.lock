@@ -7,7 +7,6 @@ name = "amplifier-app-cli"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "amplifier-core" },
     { name = "amplifier-foundation" },
     { name = "click" },
     { name = "httpx", extra = ["socks"] },
@@ -26,7 +25,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "amplifier-core", git = "https://github.com/microsoft/amplifier-core?branch=main" },
     { name = "amplifier-foundation", editable = "../amplifier-foundation" },
     { name = "click", specifier = ">=8.1.0" },
     { name = "httpx", extras = ["socks"], specifier = ">=0.28.1" },
