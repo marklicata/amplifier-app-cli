@@ -4,16 +4,14 @@ import logging
 
 import click
 from amplifier_config import Scope
+from amplifier_foundation import KeyManager, ProviderManager
+from amplifier_foundation.provider_sources import install_known_providers
 from rich.console import Console
 from rich.panel import Panel
-from rich.prompt import Confirm
-from rich.prompt import Prompt
+from rich.prompt import Confirm, Prompt
 
-from ..key_manager import KeyManager
 from ..paths import create_config_manager
 from ..provider_config_utils import configure_provider
-from ..provider_manager import ProviderManager
-from ..provider_sources import install_known_providers
 
 console = Console()
 logger = logging.getLogger(__name__)

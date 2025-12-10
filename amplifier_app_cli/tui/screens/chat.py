@@ -25,7 +25,7 @@ from textual.widgets import Footer
 from textual.widgets import Header
 
 from ...paths import create_module_resolver
-from ...session_store import SessionStore
+from amplifier_foundation import SessionStore
 from ..tool_tracker import ToolTracker
 from ..widgets.chat import ChatWidget
 from ..widgets.input import InputArea

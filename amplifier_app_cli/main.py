@@ -41,11 +41,11 @@ from .commands.update import update as update_cmd
 from .commands.version import version as version_cmd
 from .console import Markdown
 from .console import console
-from .effective_config import get_effective_config_summary
-from .key_manager import KeyManager
+from amplifier_foundation.effective_config import get_effective_config_summary
+from amplifier_foundation import KeyManager
 from .paths import create_module_resolver
 from .paths import create_profile_loader
-from .session_store import SessionStore
+from amplifier_foundation import SessionStore
 from .ui.error_display import display_validation_error
 from .utils.version import get_version
 
@@ -356,7 +356,7 @@ class CommandProcessor:
             messages = await context.get_messages()
 
             # Sanitize messages to handle ThinkingBlock and other non-serializable objects
-            from .session_store import SessionStore
+            from amplifier_foundation import SessionStore
 
             store = SessionStore()
             sanitized_messages = [store._sanitize_message(msg) for msg in messages]
@@ -885,7 +885,7 @@ async def interactive_chat(
     # Register session spawning capability for agent delegation (app-layer policy)
     async def spawn_with_agent_wrapper(agent_name: str, instruction: str, sub_session_id: str):
         """Wrapper for session spawning using coordinator infrastructure."""
-        from .session_spawner import spawn_sub_session
+        from amplifier_foundation.session_spawner import spawn_sub_session
 
         # Get agents from session config (loaded via mount plan)
         agents = session.config.get("agents", {})

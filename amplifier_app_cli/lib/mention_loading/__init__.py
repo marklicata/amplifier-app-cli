@@ -1,13 +1,19 @@
-"""Mention loading library for Amplifier (wraps foundation).
+"""Mention loading - Re-export from amplifier_foundation.
 
-This module re-exports functionality from amplifier-foundation for backward compatibility.
+This module is maintained for backward compatibility.
+All new code should import from amplifier_foundation directly.
 """
 
 from amplifier_foundation.mention_loading import (
     ContentDeduplicator,
-    ContextFile,
     MentionLoader,
+    MentionMetadata,
     MentionResolver,
 )
 
-__all__ = ["MentionLoader", "MentionResolver", "ContentDeduplicator", "ContextFile"]
+__all__ = [
+    "MentionMetadata",
+    "MentionResolver",
+    "MentionLoader",
+    "ContentDeduplicator",
+]

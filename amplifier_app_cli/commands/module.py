@@ -15,7 +15,7 @@ from rich.table import Table
 
 from ..console import console
 from ..data.profiles import get_system_default_profile
-from ..module_manager import ModuleManager
+from amplifier_foundation import ModuleManager
 from ..paths import ScopeNotAvailableError
 from ..paths import ScopeType
 from ..paths import create_config_manager

@@ -8,13 +8,13 @@ from rich.console import Console
 from rich.prompt import Prompt
 from rich.table import Table
 
-from ..key_manager import KeyManager
+from amplifier_foundation import KeyManager
 from ..paths import ScopeNotAvailableError
 from ..paths import create_config_manager
 from ..paths import get_effective_scope
 from ..provider_config_utils import configure_provider
-from ..provider_manager import ProviderManager
-from ..provider_manager import ScopeType
+from amplifier_foundation import ProviderManager
+from amplifier_foundation import ScopeType
 
 console = Console()
 

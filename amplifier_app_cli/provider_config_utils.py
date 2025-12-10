@@ -12,7 +12,7 @@ from rich.console import Console
 from rich.prompt import Confirm
 from rich.prompt import Prompt
 
-from .key_manager import KeyManager
+from amplifier_foundation import KeyManager
 from .provider_loader import get_provider_info
 from .provider_loader import get_provider_models
 

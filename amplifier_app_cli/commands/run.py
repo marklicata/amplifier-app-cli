@@ -13,7 +13,7 @@ import click
 
 from ..console import console
 from ..data.profiles import get_system_default_profile
-from ..effective_config import get_effective_config_summary
+from amplifier_foundation.effective_config import get_effective_config_summary
 from ..lib.app_settings import AppSettings
 from ..paths import create_agent_loader
 from ..paths import create_config_manager
@@ -69,7 +69,7 @@ def register_run_command(
         tui: bool,
     ):
         """Execute a prompt or start an interactive session."""
-        from ..session_store import SessionStore
+        from amplifier_foundation import SessionStore
 
         # Handle --resume flag
         if resume:
