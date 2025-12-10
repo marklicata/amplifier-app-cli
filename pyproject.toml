@@ -10,7 +10,6 @@ dependencies = [
     "click>=8.1.0",
     "rich>=13.0.0",
     "pydantic>=2.0.0",
-    "amplifier-core",
     "amplifier-foundation",
     "pyyaml>=6.0.3",
     "prompt-toolkit>=3.0.52",
@@ -38,8 +37,7 @@ build-backend = "hatchling.build"
 dev = ["pytest>=8.4.2", "pytest-asyncio>=0.24.0"]
 
 [tool.uv.sources]
-amplifier-core = { git = "https://github.com/microsoft/amplifier-core", branch = "main" }
-amplifier-foundation = { path = "https://github.com/marklicata/amplifier-foundation", branch = "main" }
+amplifier-foundation = { path = "../amplifier-foundation", editable = true }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
