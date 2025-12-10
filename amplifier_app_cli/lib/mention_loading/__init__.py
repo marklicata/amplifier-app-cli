@@ -1,12 +1,13 @@
-"""Mention loading library for Amplifier.
+"""Mention loading library for Amplifier (wraps foundation).
 
-This library loads files referenced by @mentions, deduplicates content,
-and returns Message objects for use in context.
+This module re-exports functionality from amplifier-foundation for backward compatibility.
 """
 
-from .deduplicator import ContentDeduplicator
-from .loader import MentionLoader
-from .models import ContextFile
-from .resolver import MentionResolver
+from amplifier_foundation.mention_loading import (
+    ContentDeduplicator,
+    ContextFile,
+    MentionLoader,
+    MentionResolver,
+)
 
 __all__ = ["MentionLoader", "MentionResolver", "ContentDeduplicator", "ContextFile"]

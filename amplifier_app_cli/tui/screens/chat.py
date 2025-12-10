@@ -11,8 +11,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import UTC
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
+from amplifier_core import AmplifierSession
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
@@ -20,9 +24,13 @@ from textual.screen import Screen
 from textual.widgets import Footer
 from textual.widgets import Header
 
+from ...paths import create_module_resolver
+from ...session_store import SessionStore
+from ..tool_tracker import ToolTracker
 from ..widgets.chat import ChatWidget
 from ..widgets.input import InputArea
 from ..widgets.input import InputSubmitted
+from ..widgets.progress_tracker import ProgressTracker
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +63,19 @@ class ChatScreen(Screen):
         background: $surface;
     }
     
+    #main-content {
+        height: 1fr;
+        layout: vertical;
+    }
+    
     #chat-container {
         height: 1fr;
+    }
+    
+    #progress-tracker {
+        height: auto;
+        max-height: 15;
+        border-top: solid $primary;
     }
     
     .welcome-message {
@@ -87,39 +106,98 @@ class ChatScreen(Screen):
         self.config = config or {}
         self.amplifier_session = None
         self._processing = False
+        self._initial_transcript = None
+        self._tool_tracker = None
+        self._tool_tracker_unreg = None
+        
+        # Generate session ID if not provided
+        if not self.session_id:
+            import uuid
+            self.session_id = str(uuid.uuid4())
     
     def compose(self) -> ComposeResult:
         """Create child widgets for chat screen."""
         yield Header()
         
-        with Container(id="chat-container"):
-            yield ChatWidget(id="chat")
+        with Container(id="main-content"):
+            with Container(id="chat-container"):
+                yield ChatWidget(id="chat")
+            
+            # Progress tracker showing AI's thinking steps
+            yield ProgressTracker(id="progress-tracker")
         
         yield InputArea(id="input")
         yield Footer()
     
     def on_mount(self) -> None:
         """Set up chat screen after mounting."""
-        # Update subtitle with profile
-        if self.profile:
-            self.sub_title = f"Profile: {self.profile}"
+        # Extract provider and model info for subtitle
+        provider_name = "unknown"
+        model_name = "unknown"
+        if isinstance(self.config.get("providers"), list) and self.config["providers"]:
+            first_provider = self.config["providers"][0]
+            if isinstance(first_provider, dict):
+                provider_name = first_provider.get("module", "unknown").replace("provider-", "")
+                if "config" in first_provider:
+                    provider_config = first_provider["config"]
+                    model_name = provider_config.get("model") or provider_config.get("default_model", "unknown")
         
-        # Show welcome message
+        # Update subtitle with profile, provider, model, and session
+        self.sub_title = f"{self.profile} | {provider_name}/{model_name} | {self.session_id[:8]}..."
+        
+        # Try to load existing session
         chat = self.query_one("#chat", ChatWidget)
-        chat.add_message(
-            "Welcome to Amplifier! 👋\n\n"
-            "I'm here to help you with your development tasks.\n\n"
-            "Type your request below and press **Enter** to send.\n"
-            "Use **Shift+Enter** for a new line.\n\n"
-            "*Tip: Press Ctrl+/ to see all keyboard shortcuts.*",
-            role="assistant",
-        )
+        store = SessionStore()
+        
+        if store.exists(self.session_id):
+            try:
+                transcript, metadata = store.load(self.session_id)
+                self._initial_transcript = transcript
+                
+                # Show resumed session banner
+                chat.add_message(
+                    f"**Session Resumed** ({self.session_id[:8]}...)\n\n"
+                    f"Previous messages: {len(transcript)}\n"
+                    f"Profile: {self.profile}\n\n"
+                    "Continue the conversation below.",
+                    role="system",
+                )
+                
+                # Display previous messages
+                for msg in transcript:
+                    role = msg.get("role", "assistant")
+                    content = msg.get("content", "")
+                    if role in ("user", "assistant"):
+                        chat.add_message(content, role=role)
+                
+                logger.info(f"Loaded {len(transcript)} messages from session {self.session_id}")
+                
+            except Exception as e:
+                logger.error(f"Failed to load session: {e}", exc_info=True)
+                chat.add_message(
+                    f"Could not load session history: {str(e)}\n\n"
+                    "Starting fresh conversation.",
+                    role="system",
+                )
+        else:
+            # New session - show welcome message
+            chat.add_message(
+                "Welcome to Amplifier! 👋\n\n"
+                "I'm here to help you with your development tasks.\n\n"
+                "Type your request below and press **Enter** to send.\n"
+                "Use **Shift+Enter** for a new line.\n\n"
+                "*Tip: Press Ctrl+/ to see all keyboard shortcuts.*",
+                role="assistant",
+            )
         
         # Focus input
         input_area = self.query_one("#input", InputArea)
         input_area.focus_input()
         
         logger.info(f"Chat screen mounted (session={self.session_id}, profile={self.profile})")
+        
+        # Initialize session immediately (don't wait for first message)
+        self.run_worker(self._initialize_session_on_mount(), exclusive=True)
     
     async def on_input_submitted(self, event: InputSubmitted) -> None:
         """Handle user input submission.
@@ -136,11 +214,7 @@ class ChatScreen(Screen):
         if not user_message:
             return
         
-        # Add user message to chat
-        chat = self.query_one("#chat", ChatWidget)
-        chat.add_message(user_message, role="user")
-        
-        # Process the message
+        # Process the message (user message is added inside _process_user_message now)
         await self._process_user_message(user_message)
     
     async def _process_user_message(self, message: str) -> None:
@@ -154,21 +228,48 @@ class ChatScreen(Screen):
         try:
             chat = self.query_one("#chat", ChatWidget)
             
+            # Add user message to chat FIRST (fix #3)
+            chat.add_message(message, role="user")
+            
+            # Check if session is initialized
+            if not self.amplifier_session:
+                # This shouldn't happen now that we init on mount, but just in case
+                chat.add_message(
+                    "⚠️ Session not initialized. Please wait...",
+                    role="system",
+                )
+                self._processing = False
+                return
+            
             # Start streaming response
-            streaming_bubble = chat.start_streaming_message(role="assistant")
+            chat.start_streaming_message(role="assistant")
             
-            # Simulate AI response for Phase 2 demo
-            # In future phases, this will integrate with AmplifierSession
-            await self._simulate_ai_response(chat, message)
-            
-            # Finalize streaming
-            chat.finalize_streaming()
+            # Execute prompt with real AmplifierSession
+            try:
+                response = await self.amplifier_session.execute(message)
+                
+                # Add the complete response to the streaming message
+                chat.append_to_streaming(response)
+                
+                # Finalize streaming
+                chat.finalize_streaming()
+                
+                # Save session after each interaction
+                await self._save_session()
+                
+            except Exception as e:
+                logger.error(f"Error executing prompt: {e}", exc_info=True)
+                chat.finalize_streaming()
+                chat.add_message(
+                    f"Error: {str(e)}\n\nPlease try again.",
+                    role="system",
+                )
             
         except Exception as e:
-            logger.error(f"Error processing message: {e}")
+            logger.error(f"Error processing message: {e}", exc_info=True)
             chat = self.query_one("#chat", ChatWidget)
             chat.add_message(
-                f"❌ Error: {str(e)}\n\nPlease try again.",
+                f"Error: {str(e)}\n\nPlease try again.",
                 role="system",
             )
         
@@ -179,61 +280,163 @@ class ChatScreen(Screen):
             input_area = self.query_one("#input", InputArea)
             input_area.focus_input()
     
-    async def _simulate_ai_response(self, chat: ChatWidget, user_message: str) -> None:
-        """Simulate AI response with streaming.
+    async def _initialize_session_on_mount(self) -> None:
+        """Initialize session on mount (runs in background worker)."""
+        try:
+            chat = self.query_one("#chat", ChatWidget)
+            
+            # Show initialization message
+            chat.add_message(
+                "Initializing AI session...",
+                role="system",
+            )
+            
+            # Initialize the session
+            await self._initialize_session()
+            
+            # Update message to show ready
+            chat.add_message(
+                "Session ready! Ask me anything.",
+                role="system",
+            )
+            
+            logger.info("Session initialized successfully on mount")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize session on mount: {e}", exc_info=True)
+            chat = self.query_one("#chat", ChatWidget)
+            chat.add_message(
+                f"Failed to initialize session: {str(e)}\n\n"
+                "Please check your configuration and restart.",
+                role="system",
+            )
+    
+    async def _initialize_session(self) -> None:
+        """Initialize AmplifierSession with proper configuration."""
+        try:
+            # Create UX systems for TUI
+            from ...ui import CLIApprovalSystem, CLIDisplaySystem
+            
+            approval_system = CLIApprovalSystem()
+            display_system = CLIDisplaySystem()
+            
+            # Create session
+            self.amplifier_session = AmplifierSession(
+                self.config,
+                session_id=self.session_id,
+                approval_system=approval_system,
+                display_system=display_system,
+            )
+            
+            # Mount module source resolver
+            resolver = create_module_resolver()
+            await self.amplifier_session.coordinator.mount("module-source-resolver", resolver)
+            
+            # Register capabilities
+            from ...lib.mention_loading.deduplicator import ContentDeduplicator
+            from ...lib.mention_loading.resolver import MentionResolver
+            
+            mention_resolver = MentionResolver()
+            self.amplifier_session.coordinator.register_capability("mention_resolver", mention_resolver)
+            
+            mention_deduplicator = ContentDeduplicator()
+            self.amplifier_session.coordinator.register_capability("mention_deduplicator", mention_deduplicator)
+            
+            # Initialize session (loads modules, etc.)
+            await self.amplifier_session.initialize()
+            
+            # Restore transcript if resuming
+            if self._initial_transcript:
+                for message in self._initial_transcript:
+                    await self.amplifier_session.add_message(
+                        role=message.get("role"),
+                        content=message.get("content", ""),
+                    )
+                logger.info(f"Restored {len(self._initial_transcript)} messages to session context")
+            
+            # Register CLI approval provider if needed
+            from ...approval_provider import CLIApprovalProvider
+            from ...console import console
+            
+            register_provider = self.amplifier_session.coordinator.get_capability("approval.register_provider")
+            if register_provider:
+                approval_provider = CLIApprovalProvider(console)
+                register_provider(approval_provider)
+            
+            # Register tool tracker to show progress in tracker widget
+            progress_tracker = self.query_one("#progress-tracker", ProgressTracker)
+            self._tool_tracker = ToolTracker(progress_tracker)
+            unreg_pre, unreg_post = self._tool_tracker.register_hooks(self.amplifier_session)
+            self._tool_tracker_unreg = (unreg_pre, unreg_post)
+            
+            logger.info(f"AmplifierSession initialized (session_id={self.session_id})")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize session: {e}", exc_info=True)
+            raise
+    
+    async def _save_session(self) -> None:
+        """Save current session state to SessionStore."""
+        try:
+            if not self.amplifier_session:
+                return
+            
+            # Get transcript from context
+            context = self.amplifier_session.coordinator.get("context")
+            if not context or not hasattr(context, "get_messages"):
+                return
+            
+            messages = await context.get_messages()
+            
+            # Extract model name from config
+            model_name = "unknown"
+            if isinstance(self.config.get("providers"), list) and self.config["providers"]:
+                first_provider = self.config["providers"][0]
+                if isinstance(first_provider, dict) and "config" in first_provider:
+                    provider_config = first_provider["config"]
+                    model_name = provider_config.get("model") or provider_config.get("default_model", "unknown")
+            
+            # Create metadata
+            metadata = {
+                "session_id": self.session_id,
+                "created": datetime.now(UTC).isoformat(),
+                "profile": self.profile,
+                "model": model_name,
+                "turn_count": len([m for m in messages if m.get("role") == "user"]),
+            }
+            
+            # Save to store
+            store = SessionStore()
+            store.save(self.session_id, messages, metadata)
+            
+            logger.debug(f"Session saved: {self.session_id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to save session: {e}", exc_info=True)
+            # Don't raise - saving is best-effort
+    
+    async def _show_review_screen_if_needed(self, user_request: str) -> None:
+        """Show review screen if AI made file modifications.
         
-        This is a placeholder for Phase 2 demonstration.
-        Will be replaced with actual AmplifierSession integration.
+        This is a placeholder for Phase 3 integration. In the future, this will:
+        - Track tool executions via hooks
+        - Detect file modifications
+        - Extract impact metrics
+        - Show ReviewScreen for user approval
         
         Args:
-            chat: ChatWidget to stream to
-            user_message: User's message
+            user_request: The user's original request
         """
-        # Simulate thinking delay
-        await asyncio.sleep(0.5)
-        
-        # Generate a demo response based on keywords
-        if "hello" in user_message.lower() or "hi" in user_message.lower():
-            response = (
-                "Hello! 👋\n\n"
-                "I'm Amplifier, your AI development assistant. "
-                "I can help you with:\n\n"
-                "- Writing and reviewing code\n"
-                "- Debugging issues\n"
-                "- Architecture decisions\n"
-                "- Documentation\n"
-                "- And much more!\n\n"
-                "What would you like to work on today?"
-            )
-        elif "test" in user_message.lower():
-            response = (
-                "I can help you with testing! 🧪\n\n"
-                "Let me demonstrate the **streaming response** feature:\n\n"
-                "This text is being streamed character by character, "
-                "simulating how real AI responses will appear.\n\n"
-                "**Key features:**\n"
-                "- Real-time streaming\n"
-                "- Markdown rendering\n"
-                "- Code syntax highlighting\n"
-                "- And more!\n\n"
-                "*Note: This is a Phase 2 demo. Real AI integration coming soon.*"
-            )
-        else:
-            response = (
-                f"I understand you want to: **{user_message}**\n\n"
-                "This is a Phase 2 demonstration of the chat interface. "
-                "In the full implementation, I would:\n\n"
-                "1. Analyze your request\n"
-                "2. Break it down into steps\n"
-                "3. Execute tools (read files, write code, run tests)\n"
-                "4. Show you the results for review\n\n"
-                "*Integration with AmplifierSession coming in the next phase!*"
-            )
-        
-        # Stream the response character by character
-        for char in response:
-            chat.append_to_streaming(char)
-            await asyncio.sleep(0.01)  # Simulate streaming delay
+        # TODO: Implement file modification detection via hooks or tool tracking
+        # For now, this is a placeholder that can be called after execute()
+        # 
+        # Future implementation:
+        # 1. Register hook listener for tool:post events
+        # 2. Track file write operations
+        # 3. Calculate impact metrics (files changed, functions modified, etc.)
+        # 4. Show ReviewScreen with collected data
+        # 5. Handle user decision (accept/reject/defer)
+        pass
     
     def action_new_chat(self) -> None:
         """Start a new chat (clear current messages)."""
@@ -300,6 +503,14 @@ class ChatScreen(Screen):
             self.notify("Cancellation coming in future phase", severity="warning")
         else:
             self.notify("No operation to cancel", severity="information")
+    
+    async def on_screen_suspend(self) -> None:
+        """Called when screen is suspended (going to background)."""
+        # Cleanup tool tracker hooks
+        if self._tool_tracker and self._tool_tracker_unreg:
+            unreg_pre, unreg_post = self._tool_tracker_unreg
+            self._tool_tracker.unregister_hooks(unreg_pre, unreg_post)
+            logger.info("Tool tracker hooks unregistered on suspend")
 
 
 __all__ = ["ChatScreen"]
