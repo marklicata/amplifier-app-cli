@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from amplifier_core import AmplifierSession
+from amplifier_app_utils import AmplifierSession
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Container
@@ -25,7 +25,7 @@ from textual.widgets import Footer
 from textual.widgets import Header
 
 from ...paths import create_module_resolver
-from amplifier_foundation import SessionStore
+from ...session_store import SessionStore
 from ..tool_tracker import ToolTracker
 from ..widgets.chat import ChatWidget
 from ..widgets.input import InputArea

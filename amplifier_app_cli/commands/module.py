@@ -15,7 +15,7 @@ from rich.table import Table
 
 from ..console import console
 from ..data.profiles import get_system_default_profile
-from amplifier_foundation import ModuleManager
+from amplifier_app_utils import ModuleManager
 from ..paths import ScopeNotAvailableError
 from ..paths import ScopeType
 from ..paths import create_config_manager
@@ -43,7 +43,7 @@ def module(ctx: click.Context):
 )
 def list_modules(type: str):
     """List installed modules and those provided by the active profile."""
-    from amplifier_core.loader import ModuleLoader
+    from amplifier_app_utils.loader import ModuleLoader
 
     loader = ModuleLoader()
     modules_info = asyncio.run(loader.discover())
@@ -141,7 +141,7 @@ def list_modules(type: str):
 @click.argument("module_name")
 def module_show(module_name: str):
     """Show detailed information about a module."""
-    from amplifier_core.loader import ModuleLoader
+    from amplifier_app_utils.loader import ModuleLoader
 
     config_manager = create_config_manager()
     active_profile = config_manager.get_active_profile() or get_system_default_profile()
@@ -244,7 +244,7 @@ def module_add(module_id: str, source: str | None, scope_flag: str | None):
 
     # Download the module if it's a git source
     if source and source.startswith("git+"):
-        from amplifier_module_resolution.sources import GitSource
+        from amplifier_app_utils.sources import GitSource
 
         console.print("  Downloading module...", end="")
         try:
@@ -360,7 +360,7 @@ def _get_local_override_names() -> set[str]:
 
     These modules use FileSource and should take precedence over cached versions.
     """
-    from amplifier_module_resolution import FileSource
+    from amplifier_app_utils import FileSource
 
     resolver = create_module_resolver()
     local_names: set[str] = set()
@@ -516,11 +516,11 @@ async def _module_validate_async(
     module_path: str, module_type: str | None, output_format: str, verbose: bool, behavioral: bool
 ):
     """Async implementation of module validate."""
-    from amplifier_core.validation import ContextValidator
-    from amplifier_core.validation import HookValidator
-    from amplifier_core.validation import OrchestratorValidator
-    from amplifier_core.validation import ProviderValidator
-    from amplifier_core.validation import ToolValidator
+    from amplifier_app_utils.validation import ContextValidator
+    from amplifier_app_utils.validation import HookValidator
+    from amplifier_app_utils.validation import OrchestratorValidator
+    from amplifier_app_utils.validation import ProviderValidator
+    from amplifier_app_utils.validation import ToolValidator
 
     path = Path(module_path).resolve()
 
@@ -595,11 +595,11 @@ def _run_behavioral_tests(module_path: str, module_type: str) -> bool:
     console.print()
     console.print("[bold]Running behavioral tests...[/bold]")
 
-    # Find the behavioral test file - look in amplifier-core package
+    # Find the behavioral test file - look in amplifier-app-utils package
     try:
-        import amplifier_core
+        import amplifier_app_utils
 
-        core_path = Path(amplifier_core.__file__).parent
+        core_path = Path(amplifier_app_utils.__file__).parent
         test_file = core_path / "validation" / "behavioral" / f"test_{module_type}.py"
 
         if not test_file.exists():
@@ -607,7 +607,7 @@ def _run_behavioral_tests(module_path: str, module_type: str) -> bool:
             return True  # Not a failure - tests just don't exist yet
 
     except ImportError:
-        console.print("[red]amplifier-core not installed - cannot run behavioral tests[/red]")
+        console.print("[red]amplifier-app-utils not installed - cannot run behavioral tests[/red]")
         return False
 
     # Run pytest with the module path

@@ -10,7 +10,7 @@ dependencies = [
     "click>=8.1.0",
     "rich>=13.0.0",
     "pydantic>=2.0.0",
-    "amplifier-foundation",
+    "amplifier-app-utils",
     "pyyaml>=6.0.3",
     "prompt-toolkit>=3.0.52",
     "httpx[socks]>=0.28.1",
@@ -37,7 +37,7 @@ build-backend = "hatchling.build"
 dev = ["pytest>=8.4.2", "pytest-asyncio>=0.24.0"]
 
 [tool.uv.sources]
-amplifier-app-utils = { git = "https://github.com/marklicata/amplifier-app-utils", branch = "main" }
+amplifier-app-utils = { git = "https://github.com/marklicata/amplifier-app-utils", branch = "master" }
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -26,7 +26,7 @@ from amplifier_collections import install_collection
 from amplifier_collections import list_agents
 from amplifier_collections import list_profiles
 from amplifier_collections import uninstall_collection
-from amplifier_module_resolution import GitSource
+from amplifier_app_utils import GitSource
 from rich.table import Table
 
 from ..console import console

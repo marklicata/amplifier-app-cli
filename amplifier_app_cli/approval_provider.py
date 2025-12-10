@@ -3,8 +3,8 @@
 import asyncio
 import logging
 
-from amplifier_core import ApprovalRequest
-from amplifier_core import ApprovalResponse
+from amplifier_app_utils import ApprovalRequest
+from amplifier_app_utils import ApprovalResponse
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm

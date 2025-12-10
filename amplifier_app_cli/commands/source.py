@@ -25,8 +25,8 @@ from ..paths import ScopeType
 from ..paths import create_config_manager
 from ..paths import create_module_resolver
 from ..paths import get_effective_scope
-from amplifier_foundation.provider_sources import DEFAULT_PROVIDER_SOURCES
-from amplifier_foundation.provider_sources import is_local_path
+from amplifier_app_utils.provider_sources import DEFAULT_PROVIDER_SOURCES
+from amplifier_app_utils.provider_sources import is_local_path
 
 
 def _is_module_path(path: Path) -> bool:

@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 
 import click
-from amplifier_core import AmplifierSession
-# from amplifier_core import Exception # Not exported
+from amplifier_app_utils import AmplifierSession
+# from amplifier_app_utils import Exception # Not exported
 from amplifier_profiles.utils import parse_markdown_body
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import HTML
@@ -41,11 +41,11 @@ from .commands.update import update as update_cmd
 from .commands.version import version as version_cmd
 from .console import Markdown
 from .console import console
-from amplifier_foundation.effective_config import get_effective_config_summary
-from amplifier_foundation import KeyManager
+from amplifier_app_utils.effective_config import get_effective_config_summary
+from amplifier_app_utils import KeyManager
 from .paths import create_module_resolver
 from .paths import create_profile_loader
-from amplifier_foundation import SessionStore
+from amplifier_app_utils import SessionStore
 from .ui.error_display import display_validation_error
 from .utils.version import get_version
 
@@ -318,7 +318,7 @@ class CommandProcessor:
     def _configure_plan_mode(self, enabled: bool):
         """Configure session for plan mode."""
         # Import HookResult here to avoid circular import
-        from amplifier_core.models import HookResult
+        from amplifier_app_utils.models import HookResult
 
         # Access hooks via the coordinator
         hooks = self.session.coordinator.get("hooks")
@@ -356,7 +356,7 @@ class CommandProcessor:
             messages = await context.get_messages()
 
             # Sanitize messages to handle ThinkingBlock and other non-serializable objects
-            from amplifier_foundation import SessionStore
+            from amplifier_app_utils import SessionStore
 
             store = SessionStore()
             sanitized_messages = [store._sanitize_message(msg) for msg in messages]
@@ -675,7 +675,7 @@ async def _process_profile_mentions(session: AmplifierSession, profile_name: str
     """
     import logging
 
-    from amplifier_core.message_models import Message
+    from amplifier_app_utils.message_models import Message
 
     from .lib.mention_loading import MentionLoader
     from .utils.mentions import has_mentions
@@ -885,7 +885,7 @@ async def interactive_chat(
     # Register session spawning capability for agent delegation (app-layer policy)
     async def spawn_with_agent_wrapper(agent_name: str, instruction: str, sub_session_id: str):
         """Wrapper for session spawning using coordinator infrastructure."""
-        from amplifier_foundation.session_spawner import spawn_sub_session
+        from amplifier_app_utils.session_spawner import spawn_sub_session
 
         # Get agents from session config (loaded via mount plan)
         agents = session.config.get("agents", {})
@@ -972,7 +972,7 @@ async def interactive_chat(
                                 # Emit prompt:complete (canonical kernel event) after displaying response
                                 hooks = session.coordinator.get("hooks")
                                 if hooks:
-                                    from amplifier_core.events import PROMPT_COMPLETE
+                                    from amplifier_app_utils.events import PROMPT_COMPLETE
 
                                     await hooks.emit(PROMPT_COMPLETE, {"prompt": data["text"], "response": response})
 
@@ -1118,7 +1118,7 @@ async def execute_single(
         # This ensures hook output goes to stderr in JSON mode
         hooks = session.coordinator.get("hooks")
         if hooks:
-            from amplifier_core.events import PROMPT_COMPLETE
+            from amplifier_app_utils.events import PROMPT_COMPLETE
 
             await hooks.emit(PROMPT_COMPLETE, {"prompt": prompt, "response": response})
 
@@ -1313,7 +1313,7 @@ async def execute_single_with_session(
         # This ensures hook output goes to stderr in JSON mode
         hooks = session.coordinator.get("hooks")
         if hooks:
-            from amplifier_core.events import PROMPT_COMPLETE
+            from amplifier_app_utils.events import PROMPT_COMPLETE
 
             await hooks.emit(PROMPT_COMPLETE, {"prompt": prompt, "response": response})
 
@@ -1600,3 +1600,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

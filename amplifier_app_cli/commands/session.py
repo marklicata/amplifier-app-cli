@@ -22,9 +22,9 @@ from ..lib.app_settings import AppSettings
 from ..paths import create_agent_loader
 from ..paths import create_config_manager
 from ..paths import create_profile_loader
-from amplifier_foundation.project_utils import get_project_slug
+from amplifier_app_utils.project_utils import get_project_slug
 from ..runtime.config import resolve_app_config
-from amplifier_foundation import SessionStore
+from amplifier_app_utils import SessionStore
 
 InteractiveResume = Callable[[dict, list[Path], bool, str, list[dict], str], Coroutine[Any, Any, None]]
 ExecuteSingleWithSession = Callable[[str, dict, list[Path], bool, str, list[dict], str], Coroutine[Any, Any, None]]

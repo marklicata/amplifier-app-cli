@@ -4,8 +4,8 @@ import logging
 
 import click
 from amplifier_config import Scope
-from amplifier_foundation import KeyManager, ProviderManager
-from amplifier_foundation.provider_sources import install_known_providers
+from amplifier_app_utils import KeyManager, ProviderManager
+from amplifier_app_utils.provider_sources import install_known_providers
 from rich.console import Console
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt

@@ -117,8 +117,8 @@ async def check_all_sources(include_all_cached: bool = False, force: bool = Fals
     Returns:
         UpdateReport with all source statuses
     """
-    from amplifier_module_resolution import FileSource
-    from amplifier_module_resolution import GitSource
+    from amplifier_app_utils import FileSource
+    from amplifier_app_utils import GitSource
 
     # Get all sources to check
     all_sources = await _get_all_sources_to_check()
@@ -536,7 +536,7 @@ async def _check_collection_sources(force: bool = False) -> list[CollectionStatu
         List of CollectionStatus for ALL collections (with has_update flag)
     """
     from amplifier_collections import CollectionLock
-    from amplifier_module_resolution import GitSource
+    from amplifier_app_utils import GitSource
 
     from ..paths import get_collection_lock_path
 
@@ -666,3 +666,4 @@ def _get_github_auth_headers() -> dict:
             pass
 
     return {}
+

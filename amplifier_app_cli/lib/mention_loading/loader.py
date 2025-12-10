@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from amplifier_core.message_models import Message
+from amplifier_app_utils.message_models import Message
 
 from ...utils.mentions import extract_mention_path
 from ...utils.mentions import parse_mentions

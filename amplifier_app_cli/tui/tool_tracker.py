@@ -41,7 +41,7 @@ class ToolTracker:
             event: Event name (should be "tool:pre")
             data: Event data containing tool_name and tool_input
         """
-        from amplifier_core.models import HookResult
+        from amplifier_app_utils.models import HookResult
         
         tool_name = data.get("tool_name", "unknown")
         tool_input = data.get("tool_input", {})
@@ -71,7 +71,7 @@ class ToolTracker:
             event: Event name (should be "tool:post")
             data: Event data containing tool_name and result
         """
-        from amplifier_core.models import HookResult
+        from amplifier_app_utils.models import HookResult
         
         tool_name = data.get("tool_name", "unknown")
         result = data.get("result")
@@ -143,3 +143,4 @@ class ToolTracker:
 
 
 __all__ = ["ToolTracker"]
+

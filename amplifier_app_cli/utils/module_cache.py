@@ -243,7 +243,7 @@ def update_module(
     Returns:
         Path to the newly downloaded module
     """
-    from amplifier_module_resolution.sources import GitSource
+    from amplifier_app_utils.sources import GitSource
 
     module_id = _extract_module_id(url)
 
@@ -265,3 +265,4 @@ def update_module(
     logger.debug(f"Updated {module_id}@{ref} to {result_path}")
 
     return result_path
+

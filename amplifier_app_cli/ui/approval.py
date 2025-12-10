@@ -13,10 +13,10 @@ logger = logging.getLogger(__name__)
 
 # Import exception from kernel for reuse
 if TYPE_CHECKING:
-    from amplifier_core.approval import ApprovalTimeoutError
+    from amplifier_app_utils.approval import ApprovalTimeoutError
 else:
     try:
-        from amplifier_core.approval import ApprovalTimeoutError
+        from amplifier_app_utils.approval import ApprovalTimeoutError
     except ImportError:
         # Fallback for standalone usage
         class ApprovalTimeoutError(Exception):
@@ -80,3 +80,4 @@ class CLIApprovalSystem:
         except TimeoutError:
             self.console.print(f"\n[yellow]⏱  Timeout ({timeout}s) - using default: {default}[/yellow]")
             raise ApprovalTimeoutError(f"User approval timeout after {timeout}s")
+
