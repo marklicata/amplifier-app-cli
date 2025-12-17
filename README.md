@@ -79,6 +79,11 @@ amplifier module show <name>
 amplifier module refresh [<name>] [--mutable-only]
 amplifier module check-updates
 
+# Module registry discovery
+amplifier module registry [--type <type>] [--verified] [--json]
+amplifier module search <query> [--type <type>] [--verified] [--json]
+amplifier module info <name> [--json]
+
 # Source management
 amplifier source add <id> <uri> [--local|--project|--global]
 amplifier source remove <id> [--scope]
